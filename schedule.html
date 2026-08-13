@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class Schedule</title>
+<style>
+  :root{
+    --bg-0:#0c1224;
+    --bg-1:#121a33;
+    --bg-2:#182242;
+    --line:#26305a;
+    --ink-0:#eef1fb;
+    --ink-1:#a9b3d6;
+    --ink-2:#6c78a3;
+    --accent:#5b8cff;
+    --today-glow:#33d6a6;
+    --danger:#ff6b6b;
+    --danger-bg:#3a1c26;
+    --edit-bg:#20264a;
+    --radius:18px;
+    --radius-sm:12px;
+    --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+    --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 20% -10%, #1c2a55 0%, transparent 55%),
+      radial-gradient(ellipse at 100% 0%, #14203f 0%, transparent 50%),
+      var(--bg-0);
+    font-family:var(--font-body);
+    color:var(--ink-0);
+    padding:28px 16px 80px;
+  }
+  .wrap{max-width:620px;margin:0 auto;}
+
+  /* header */
+  .topbar{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    margin-bottom:22px;gap:12px;
+  }
+  .titleblock .eyebrow{
+    font-family:var(--font-mono);
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    font-size:11px;
+    color:var(--today-glow);
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:var(--font-display);
+    font-size:28px;
+    margin:0;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .sub{color:var(--ink-2);font-size:13px;margin-top:6px;}
+
+  .admin-btn{
+    display:flex;align-items:center;gap:8px;
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    color:var(--ink-1);
+    padding:9px 14px;
+    border-radius:999px;
+    font-size:12.5px;
+    font-family:var(--font-mono);
+    cursor:pointer;
+    white-space:nowrap;
+    transition:.15s ease;
+  }
+  .admin-btn:hover{border-color:var(--accent);color:var(--ink-0);}
+  .admin-btn.on{
+    background:linear-gradient(135deg,#2a4d3f,#1c3a30);
+    border-color:var(--today-glow);
+    color:var(--today-glow);
+  }
+  .admin-btn svg{width:14px;height:14px;flex:none;}
+
+  /* day card */
+  .day{
+    background:var(--bg-1);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-bottom:14px;
+    overflow:hidden;
+    transition:border-color .2s;
+  }
+  .day.today{
+    border-color:var(--today-glow);
+    box-shadow:0 0 0 1px rgba(51,214,166,.15), 0 12px 30px -18px rgba(51,214,166,.4);
+  }
+  .day-head{
+    display:flex;align-items:center;gap:14px;
+    padding:16px 18px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .day-badge{
+    width:38px;height:38px;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:14px;
+    color:#0c1224;
+    background:linear-gradient(135deg,#8fb4ff,#5b8cff);
+    flex:none;
+  }
+  .day.today .day-badge{background:linear-gradient(135deg,#5be0c0,#22b992);}
+  .day-info{flex:1;min-width:0;}
+  .day-info .name{
+    font-family:var(--font-display);
+    font-weight:600;font-size:16px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .today-pill{
+    font-family:var(--font-mono);
+    font-size:9.5px;letter-spacing:.08em;
+    background:rgba(51,214,166,.15);
+    color:var(--today-glow);
+    padding:3px 8px;border-radius:999px;
+    border:1px solid rgba(51,214,166,.35);
+  }
+  .day-info .count{color:var(--ink-2);font-size:12.5px;margin-top:2px;}
+  .chevron{
+    color:var(--ink-2);flex:none;
+    transition:transform .25s ease;
+  }
+  .day.collapsed .chevron{transform:rotate(180deg);}
+
+  .classes{
+    padding:0 12px 12px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .day.collapsed .classes{display:none;}
+
+  .class-row{
+    display:flex;align-items:center;gap:12px;
+    background:var(--bg-2);
+    border-radius:var(--radius-sm);
+    padding:12px 12px 12px 0;
+    position:relative;
+  }
+  .bar{width:4px;align-self:stretch;border-radius:3px;margin-left:10px;flex:none;}
+  .class-main{flex:1;min-width:0;}
+  .class-main .code{
+    font-family:var(--font-display);
+    font-weight:700;font-size:14.5px;letter-spacing:.01em;
+  }
+  .class-main .meta{
+    display:flex;flex-wrap:wrap;gap:2px 8px;
+    color:var(--ink-1);font-size:12px;margin-top:3px;
+    font-family:var(--font-mono);
+  }
+  .class-main .meta .room{color:var(--ink-2);}
+  .class-actions{display:none;gap:6px;flex:none;padding-right:8px;}
+  .day.admin-mode .class-actions{display:flex;}
+  .icon-btn{
+    width:30px;height:30px;border-radius:9px;border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:.15s ease;
+  }
+  .icon-btn.edit{background:var(--edit-bg);color:#c9b8ff;}
+  .icon-btn.edit:hover{background:#2c3364;}
+  .icon-btn.del{background:var(--danger-bg);color:var(--danger);}
+  .icon-btn.del:hover{background:#4a1f2c;}
+  .icon-btn svg{width:14px;height:14px;}
+
+  .add-row{
+    display:none;
+    align-items:center;justify-content:center;gap:8px;
+    border:1.5px dashed var(--line);
+    border-radius:var(--radius-sm);
+    padding:11px;color:var(--ink-2);
+    font-size:12.5px;cursor:pointer;
+    font-family:var(--font-mono);
+    margin-top:2px;
+    transition:.15s;
+  }
+  .day.admin-mode .add-row{display:flex;}
+  .add-row:hover{border-color:var(--accent);color:var(--ink-0);}
+
+  .empty{
+    color:var(--ink-2);font-size:13px;padding:6px 4px 10px;
+    font-family:var(--font-mono);
+  }
+
+  /* modal */
+  .overlay{
+    position:fixed;inset:0;background:rgba(6,9,20,.72);
+    backdrop-filter:blur(4px);
+    display:none;align-items:center;justify-content:center;
+    z-index:50;padding:20px;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:var(--bg-1);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    width:100%;max-width:380px;
+    padding:22px;
+  }
+  .modal h2{
+    font-family:var(--font-display);font-size:17px;margin:0 0 4px;
+  }
+  .modal p.hint{color:var(--ink-2);font-size:12.5px;margin:0 0 16px;}
+  .field{margin-bottom:12px;}
+  .field label{
+    display:block;font-size:11px;color:var(--ink-2);
+    font-family:var(--font-mono);letter-spacing:.05em;
+    text-transform:uppercase;margin-bottom:6px;
+  }
+  .field input,.field select{
+    width:100%;background:var(--bg-2);border:1px solid var(--line);
+    border-radius:9px;padding:10px 11px;color:var(--ink-0);
+    font-size:14px;font-family:var(--font-body);
+  }
+  .field input:focus,.field select:focus{outline:none;border-color:var(--accent);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .swatches{display:flex;gap:8px;margin-top:2px;flex-wrap:wrap;}
+  .swatch{
+    width:26px;height:26px;border-radius:8px;cursor:pointer;
+    border:2px solid transparent;
+  }
+  .swatch.sel{border-color:#fff;}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .btn{
+    flex:1;padding:11px;border-radius:10px;border:none;cursor:pointer;
+    font-size:13.5px;font-family:var(--font-body);font-weight:600;
+  }
+  .btn.primary{background:var(--accent);color:#fff;}
+  .btn.primary:hover{background:#4a7bef;}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink-1);}
+  .btn.ghost:hover{border-color:var(--ink-2);color:var(--ink-0);}
+  .btn.danger{background:var(--danger);color:#2a0d0d;}
+  .error-msg{color:var(--danger);font-size:12px;margin-top:8px;display:none;}
+
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--bg-2);border:1px solid var(--line);color:var(--ink-0);
+    padding:11px 18px;border-radius:999px;font-size:13px;
+    opacity:0;transition:.25s ease;pointer-events:none;z-index:60;
+    font-family:var(--font-mono);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  ::selection{background:var(--accent);color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="titleblock">
+      <p class="eyebrow">Week view</p>
+      <h1>Class Schedule</h1>
+      <p class="sub" id="subline">Loading schedule…</p>
+    </div>
+    <button class="admin-btn" id="adminBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      <span id="adminLabel">Admin</span>
+    </button>
+  </div>
+
+  <div id="days"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Login modal -->
+<div class="overlay" id="loginOverlay">
+  <div class="modal">
+    <h2>Admin sign-in</h2>
+    <p class="hint">Enter the admin passcode to edit the schedule.</p>
+    <div class="field">
+      <label for="pwInput">Passcode</label>
+      <input type="password" id="pwInput" placeholder="••••••••" autocomplete="off">
+    </div>
+    <p class="error-msg" id="pwError">Incorrect passcode. Try again.</p>
+    <div class="modal-actions">
+      <button class="btn ghost" id="loginCancel">Cancel</button>
+      <button class="btn primary" id="loginSubmit">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit / Add modal -->
+<div class="overlay" id="editOverlay">
+  <div class="modal">
+    <h2 id="editTitle">Edit class</h2>
+    <p class="hint" id="editDayLabel"></p>
+    <div class="field">
+      <label>Subject code</label>
+      <input type="text" id="fCode" placeholder="e.g. NET102">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Start time</label>
+        <input type="time" id="fStart">
+      </div>
+      <div class="field">
+        <label>End time</label>
+        <input type="time" id="fEnd">
+      </div>
+    </div>
+    <div class="field">
+      <label>Room</label>
+      <input type="text" id="fRoom" placeholder="e.g. Annex Rm. 6 or Online">
+    </div>
+    <div class="field">
+      <label>Color tag</label>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="editCancel">Cancel</button>
+      <button class="btn primary" id="editSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm -->
+<div class="overlay" id="delOverlay">
+  <div class="modal">
+    <h2>Remove class?</h2>
+    <p class="hint" id="delText">This will delete the class from the schedule.</p>
+    <div class="modal-actions">
+      <button class="btn ghost" id="delCancel">Cancel</button>
+      <button class="btn danger" id="delConfirm">Remove</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_PASSCODE = "admin123"; // demo-only client-side lock, not real security
+const STORAGE_KEY = "class-schedule-v1";
+const DAY_ORDER = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const TODAY_NAME = DAY_ORDER[new Date().getDay()];
+const COLORS = ["#ff5c7a","#8b6bff","#3ba7ff","#2dd4a7","#ffb84d","#5b8cff","#ff8a5c"];
+
+let schedule = {
+  Monday: [
+    {code:"PF102", start:"09:30", end:"11:30", room:"Annex Rm. 6", color:"#2dd4a7"},
+    {code:"UED101", start:"15:00", end:"18:00", room:"Online", color:"#8b6bff"},
+    {code:"IT ELEC2", start:"13:00", end:"15:00", room:"Online", color:"#3fd07a"}
+  ],
+  Tuesday: [
+    {code:"PF102", start:"07:00", end:"09:00", room:"Online", color:"#2dd4a7"},
+    {code:"CCI06", start:"14:00", end:"17:00", room:"CHS Lab", color:"#3ba7ff"},
+    {code:"GE ELEC4", start:"09:30", end:"10:30", room:"Online", color:"#ff5c7a"}
+  ],
+  Wednesday: [
+    {code:"PF102", start:"14:00", end:"15:00", room:"Online", color:"#2dd4a7"},
+    {code:"SIA101", start:"10:30", end:"12:30", room:"Online", color:"#ffb84d"},
+    {code:"NET102", start:"15:00", end:"17:00", room:"Online", color:"#8b6bff"}
+  ],
+  Thursday: [
+    {code:"GE ELEC4", start:"09:00", end:"10:30", room:"Annex Rm. 6", color:"#ff5c7a"},
+    {code:"NET102", start:"14:00", end:"17:00", room:"Online", color:"#8b6bff"}
+  ],
+  Friday: [
+    {code:"UED101", start:"12:00", end:"14:00", room:"Digitel Rm. 1", color:"#8b6bff"},
+    {code:"CCI06", start:"15:00", end:"17:00", room:"Digitel Rm. 3", color:"#5b8cff"}
+  ],
+  Saturday: [
+    {code:"SIA101", start:"07:30", end:"10:30", room:"Online", color:"#ffb84d"}
+  ]
+};
+
+let isAdmin = false;
+let collapsedState = {};
+let editCtx = null; // {day, index} or {day, index:null} for add
+let delCtx = null;  // {day, index}
+
+const daysEl = document.getElementById('days');
+const toastEl = document.getElementById('toast');
+
+function to12h(t){
+  const [h,m] = t.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  let hh = h % 12; if(hh===0) hh=12;
+  return `${String(hh).padStart(2,'0')}:${String(m).padStart(2,'0')} ${period}`;
+}
+
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>toastEl.classList.remove('show'), 2200);
+}
+
+async function loadSchedule(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, true);
+    if(res && res.value){
+      schedule = JSON.parse(res.value);
+    } else {
+      await window.storage.set(STORAGE_KEY, JSON.stringify(schedule), true);
+    }
+  } catch(e){
+    console.warn("Using local defaults, storage unavailable:", e);
+  }
+  render();
+}
+
+async function saveSchedule(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(schedule), true);
+  } catch(e){
+    console.error("Storage save failed:", e);
+    showToast("Couldn't save — try again");
+  }
+}
+
+function render(){
+  daysEl.innerHTML = "";
+  const subline = document.getElementById('subline');
+  subline.textContent = isAdmin ? "Admin mode — tap the pencil to edit, trash to remove." : "Tap a day to expand. Sign in as admin to make changes.";
+
+  DAY_ORDER.slice(1).concat(DAY_ORDER[0]).forEach(day=>{
+    if(!(day in schedule)) return;
+    const classes = schedule[day].slice().sort((a,b)=> a.start.localeCompare(b.start));
+    const isToday = day === TODAY_NAME;
+    const collapsed = collapsedState[day] ?? false;
+
+    const dayDiv = document.createElement('div');
+    dayDiv.className = `day ${isToday ? 'today':''} ${collapsed?'collapsed':''} ${isAdmin?'admin-mode':''}`;
+
+    const head = document.createElement('div');
+    head.className = 'day-head';
+    head.innerHTML = `
+      <div class="day-badge">${day.slice(0,2)}</div>
+      <div class="day-info">
+        <div class="name">${day} ${isToday?'<span class="today-pill">TODAY</span>':''}</div>
+        <div class="count">${classes.length} class${classes.length===1?'':'es'}</div>
+      </div>
+      <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 15l6-6 6 6"/></svg>
+    `;
+    head.addEventListener('click', ()=>{
+      collapsedState[day] = !collapsed;
+      render();
+    });
+    dayDiv.appendChild(head);
+
+    const classesWrap = document.createElement('div');
+    classesWrap.className = 'classes';
+
+    if(classes.length === 0){
+      const e = document.createElement('div');
+      e.className = 'empty';
+      e.textContent = 'No classes scheduled.';
+      classesWrap.appendChild(e);
+    }
+
+    classes.forEach(cls=>{
+      const realIndex = schedule[day].indexOf(cls);
+      const row = document.createElement('div');
+      row.className = 'class-row';
+      row.innerHTML = `
+        <div class="bar" style="background:${cls.color}"></div>
+        <div class="class-main">
+          <div class="code">${escapeHtml(cls.code)}</div>
+          <div class="meta"><span>${to12h(cls.start)} – ${to12h(cls.end)}</span><span class="room">· ${escapeHtml(cls.room)}</span></div>
+        </div>
+        <div class="class-actions">
+          <button class="icon-btn edit" data-day="${day}" data-idx="${realIndex}" title="Edit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+          <button class="icon-btn del" data-day="${day}" data-idx="${realIndex}" title="Delete">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      `;
+      classesWrap.appendChild(row);
+    });
+
+    const addRow = document.createElement('div');
+    addRow.className = 'add-row';
+    addRow.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> Add class`;
+    addRow.addEventListener('click', (e)=>{ e.stopPropagation(); openEdit(day, null); });
+    classesWrap.appendChild(addRow);
+
+    dayDiv.appendChild(classesWrap);
+    daysEl.appendChild(dayDiv);
+  });
+
+  daysEl.querySelectorAll('.icon-btn.edit').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      openEdit(btn.dataset.day, Number(btn.dataset.idx));
+    });
+  });
+  daysEl.querySelectorAll('.icon-btn.del').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      openDelete(btn.dataset.day, Number(btn.dataset.idx));
+    });
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* ---- Admin login ---- */
+const adminBtn = document.getElementById('adminBtn');
+const adminLabel = document.getElementById('adminLabel');
+const loginOverlay = document.getElementById('loginOverlay');
+const pwInput = document.getElementById('pwInput');
+const pwError = document.getElementById('pwError');
+
+adminBtn.addEventListener('click', ()=>{
+  if(isAdmin){
+    isAdmin = false;
+    adminBtn.classList.remove('on');
+    adminLabel.textContent = 'Admin';
+    render();
+    showToast('Signed out of admin mode');
+  } else {
+    pwInput.value = '';
+    pwError.style.display = 'none';
+    loginOverlay.classList.add('show');
+    setTimeout(()=>pwInput.focus(), 50);
+  }
+});
+document.getElementById('loginCancel').addEventListener('click', ()=> loginOverlay.classList.remove('show'));
+document.getElementById('loginSubmit').addEventListener('click', tryLogin);
+pwInput.addEventListener('keydown', e=>{ if(e.key==='Enter') tryLogin(); });
+
+function tryLogin(){
+  if(pwInput.value === ADMIN_PASSCODE){
+    isAdmin = true;
+    adminBtn.classList.add('on');
+    adminLabel.textContent = 'Admin ✓';
+    loginOverlay.classList.remove('show');
+    render();
+    showToast('Admin mode on');
+  } else {
+    pwError.style.display = 'block';
+  }
+}
+
+/* ---- Edit / Add modal ---- */
+const editOverlay = document.getElementById('editOverlay');
+const editTitle = document.getElementById('editTitle');
+const editDayLabel = document.getElementById('editDayLabel');
+const fCode = document.getElementById('fCode');
+const fStart = document.getElementById('fStart');
+const fEnd = document.getElementById('fEnd');
+const fRoom = document.getElementById('fRoom');
+const swatchesEl = document.getElementById('swatches');
+let selectedColor = COLORS[0];
+
+COLORS.forEach(c=>{
+  const s = document.createElement('div');
+  s.className = 'swatch';
+  s.style.background = c;
+  s.dataset.color = c;
+  s.addEventListener('click', ()=>{
+    selectedColor = c;
+    document.querySelectorAll('.swatch').forEach(el=>el.classList.remove('sel'));
+    s.classList.add('sel');
+  });
+  swatchesEl.appendChild(s);
+});
+
+function openEdit(day, idx){
+  editCtx = {day, idx};
+  const isNew = idx === null;
+  editTitle.textContent = isNew ? 'Add class' : 'Edit class';
+  editDayLabel.textContent = day;
+  if(isNew){
+    fCode.value = '';
+    fStart.value = '09:00';
+    fEnd.value = '10:00';
+    fRoom.value = '';
+    selectedColor = COLORS[Math.floor(Math.random()*COLORS.length)];
+  } else {
+    const cls = schedule[day][idx];
+    fCode.value = cls.code;
+    fStart.value = cls.start;
+    fEnd.value = cls.end;
+    fRoom.value = cls.room;
+    selectedColor = cls.color;
+  }
+  document.querySelectorAll('.swatch').forEach(el=>{
+    el.classList.toggle('sel', el.dataset.color === selectedColor);
+  });
+  editOverlay.classList.add('show');
+  setTimeout(()=>fCode.focus(), 50);
+}
+
+document.getElementById('editCancel').addEventListener('click', ()=> editOverlay.classList.remove('show'));
+document.getElementById('editSave').addEventListener('click', async ()=>{
+  if(!fCode.value.trim() || !fRoom.value.trim() || !fStart.value || !fEnd.value){
+    showToast('Fill in all fields');
+    return;
+  }
+  const entry = {
+    code: fCode.value.trim(),
+    start: fStart.value,
+    end: fEnd.value,
+    room: fRoom.value.trim(),
+    color: selectedColor
+  };
+  const {day, idx} = editCtx;
+  if(idx === null){
+    schedule[day].push(entry);
+  } else {
+    schedule[day][idx] = entry;
+  }
+  await saveSchedule();
+  editOverlay.classList.remove('show');
+  render();
+  showToast(idx === null ? 'Class added' : 'Class updated');
+});
+
+/* ---- Delete confirm ---- */
+const delOverlay = document.getElementById('delOverlay');
+const delText = document.getElementById('delText');
+
+function openDelete(day, idx){
+  delCtx = {day, idx};
+  const cls = schedule[day][idx];
+  delText.textContent = `Remove ${cls.code} on ${day} (${to12h(cls.start)} – ${to12h(cls.end)})?`;
+  delOverlay.classList.add('show');
+}
+document.getElementById('delCancel').addEventListener('click', ()=> delOverlay.classList.remove('show'));
+document.getElementById('delConfirm').addEventListener('click', async ()=>{
+  const {day, idx} = delCtx;
+  schedule[day].splice(idx, 1);
+  await saveSchedule();
+  delOverlay.classList.remove('show');
+  render();
+  showToast('Class removed');
+});
+
+[loginOverlay, editOverlay, delOverlay].forEach(ov=>{
+  ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('show'); });
+});
+
+loadSchedule();
+</script>
+</body>
+</html>
